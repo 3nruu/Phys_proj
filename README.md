@@ -71,9 +71,7 @@ $$
 Дискретизация по времени с шагом $\Delta t$ приводит к системе:
 
 $$
-\left( \mathbf{I} + \frac{i \Delta t}{2} \hat{H} \right) \psi^{n+1}
-=
-\left( \mathbf{I} - \frac{i \Delta t}{2} \hat{H} \right) \psi^{n},
+\left( \mathbf{I} + \frac{i \Delta t}{2} \hat{H} \right) \psi^{n+1}=\left( \mathbf{I} - \frac{i \Delta t}{2} \hat{H} \right) \psi^{n},
 $$
 
 или в операторной форме:
@@ -85,13 +83,13 @@ $$
 
 Для численного решения уравнения Шрёдингера методом Кранка–Николсон используются две матрицы:
 
-\[
+$$
 \text{Mat1} = A = I + \frac{i \Delta t}{2} H
-\]
+$$
 
-\[
+$$
 \text{Mat2} = B = I - \frac{i \Delta t}{2} H
-\]
+$$
 
 где:
 - \(I\) — единичная матрица,
