@@ -141,14 +141,14 @@ $$
 
 1. **Выполнить квантовую эволюцию** до времени $t_f$, соответствующего расстоянию
 $$
-z = \frac{\hbar k}{m} (t_f - t_0).
+z = \frac{\hbar k}{m} (t_f - t_0)
 $$
 
 2. **Зафиксировать** $|\psi(x_f, y, t_f)|^2$ — квантовая «интенсивность».
 
 3. **Вычислить классическое поле** по формуле Френеля:
    $$
-   U(x,y,z) = \frac{e^{i k z}}{i \lambda z} \iint U_0(x',y') \exp\left( \frac{i\pi}{\lambda z} \left[(x-x')^2 + (y-y')^2\right] \right) dx'\, dy',
+   U(x,y,z) = \frac{e^{i k z}}{i \lambda z} \iint U_0(x',y') \exp\left( \frac{i\pi}{\lambda z} \left[(x-x')^2 + (y-y')^2\right] \right) dx'\, dy'
    $$
    где $U_0(x,y) = \psi(x,y,t_0)$.
 
