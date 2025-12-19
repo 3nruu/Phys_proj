@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 import matplotlib.gridspec as gridspec
-from Wave_Function import WaveFunction
+from WaveFunction1 import WaveFunction
 from FresnelDiffraction_1D import Fresnel1D
 import pickle
 
@@ -17,7 +17,7 @@ plt.rcParams.update({'font.size': 8})
 dt = 0.005
 hbar = 1.0
 m = 1.0
-kx0 = 20.0
+kx0 = 15.0
 wavelength = 2 * np.pi / kx0
 
 x_min, x_max = -2.0, 12.0
@@ -44,9 +44,20 @@ mask[(xx >= x_slit) & (xx <= x_slit + slit_width) &
 # -------------------------------------------------
 # Initial wave function (QM)
 # -------------------------------------------------
+# Параметры пакета
 psi0 = np.zeros((Nx, Ny), dtype=complex)
+
+# Фаза: e^{i kx0 x} — плоская волна по x, монохроматическая
 psi0[mask] = np.exp(1j * kx0 * xx[mask])
 
+# -------------------------------------------------
+# Нормировка (сохранение вероятности = 1)
+# -------------------------------------------------
+psi0_flat = psi0.flatten()  # в том же порядке, что и WaveFunction ожидает
+norm = np.sqrt(np.sum(np.abs(psi0_flat)**2) * dx * dy)
+psi0_flat /= norm
+
+# Нормировка
 psi0_flat = psi0.flatten()
 psi0_flat /= np.sqrt(np.sum(np.abs(psi0_flat)**2) * dx * dy)
 
@@ -290,4 +301,3 @@ with open("QM_vs_Fresnel_Comparison.pkl", "wb") as f:
         'error_L1_full': error_L1_full,
         'error_L2_full': error_L2_full
     }, f)
-plt.show()
