@@ -78,7 +78,7 @@ line_qm, = ax.plot([], [], lw=2, label="QM")
 line_f,  = ax.plot([], [], "--", lw=2, label="Fresnel")
 
 ax.set_xlim(y_min, y_max)
-ax.set_ylim(0, 0.15)
+ax.set_ylim(0, 0.5)
 ax.set_xlabel(r"$y$")
 ax.set_ylabel("Intensity")
 ax.legend()

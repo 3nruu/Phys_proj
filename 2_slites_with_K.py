@@ -27,14 +27,14 @@ plt.rcParams.update({'font.size': 7})
 dt = 0.005
 hbar = 1.0
 m = 1.0
-kx0 = 30.0
+kx0 = 10.0
 ky0 = 0.0
 wavelength = 2 * np.pi / kx0  # длина волны де Бройля
 
 # Spatial grid
 x_min, x_max = -2.0, 12.0
 y_min, y_max = -6.0, 6.0
-dx = dy = 0.08
+dx = dy = 0.04
 x = np.arange(x_min, x_max + dx, dx)
 y = np.arange(y_min, y_max + dy, dy)
 Nx, Ny = len(x), len(y)
@@ -82,7 +82,7 @@ FD = FresnelDiffraction(x=x, y=y, U0=U0, wavelength=wavelength)
 #       2) Setting up the plot       #
 ######################################
 
-nb_frame = 200
+nb_frame = 250
 nbr_level = 150
 x_screen = 7.0
 kx = np.argmin(np.abs(x - x_screen))
