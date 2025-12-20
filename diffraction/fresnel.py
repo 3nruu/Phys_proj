@@ -9,10 +9,6 @@ class Fresnel1D:
     """
 
     def __init__(self, y, U0, wavelength):
-        """
-        y      : 1D array of y coordinates
-        U0(y)  : complex field immediately after aperture
-        """
         self.y = np.array(y)
         self.U0 = np.array(U0, dtype=complex)
         self.wavelength = wavelength
@@ -28,19 +24,14 @@ class Fresnel1D:
         self.U0_fft = fft(self.U0)
 
     def propagate(self, z):
-        """
-        Propagate the field over distance z.
-        """
         if z <= 0:
             return self.U0.copy()
 
-        # Fresnel transfer function (1D)
         H = np.exp(-1j * np.pi * self.wavelength * z * self.fy**2)
 
         Uz_fft = self.U0_fft * H
         Uz = ifft(Uz_fft)
 
-        # Normalization (key!)
         Uz *= np.exp(1j * self.k * z) / np.sqrt(1j * self.wavelength * z)
 
         return Uz

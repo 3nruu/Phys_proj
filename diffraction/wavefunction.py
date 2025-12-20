@@ -6,15 +6,6 @@ from scipy import sparse
 from scipy.sparse.linalg import spsolve
 
 class WaveFunctionCN:
-    """
-    2D free-particle Schrödinger equation solved with Crank–Nicolson.
-
-    Assumptions:
-    - Dirichlet boundary conditions (psi=0 on all edges)
-    - dx = dy (required)
-    - ℏ and m configurable (default 1)
-    """
-
     def __init__(self, x, y, psi_0, V, dt, hbar=1.0, m=1.0, t0=0.0):
         self.x = np.array(x)
         self.y = np.array(y)
@@ -36,7 +27,7 @@ class WaveFunctionCN:
         self.size_y = len(y)
         dimension = self.size_x * self.size_y
 
-        # Build matrix A (lhs)
+        # Build matrix A 
         N = (self.size_x - 1) * (self.size_y - 1)
         size = 5 * N + 2 * self.size_x + 2 * (self.size_y - 2)
         I = np.zeros(size)
@@ -48,7 +39,6 @@ class WaveFunctionCN:
             for j in range(0, self.size_x):
                 idx = i + j * self.size_y
 
-                # Boundary nodes -> identity
                 if i == 0 or i == (self.size_y - 1) or j == 0 or j == (self.size_x - 1):
                     I[k] = idx
                     J[k] = idx
@@ -68,7 +58,7 @@ class WaveFunctionCN:
 
         self.Mat1 = sparse.coo_matrix((K, (I, J)), shape=(dimension, dimension)).tocsc()
 
-        # Build matrix B (rhs)
+        # Build matrix B 
         I = np.zeros(size)
         J = np.zeros(size)
         K = np.zeros(size, dtype=np.complex128)
@@ -92,7 +82,6 @@ class WaveFunctionCN:
 
         self.Mat2 = sparse.coo_matrix((K, (I, J)), shape=(dimension, dimension)).tocsc()
 
-    # --------------------------------------------------
     def get_prob(self):
         return np.abs(self.psi) ** 2
 
@@ -101,7 +90,5 @@ class WaveFunctionCN:
         return np.trapezoid(np.trapezoid(prob, self.x, axis=1), self.y).real
 
     def step(self):
-        # Update the state
         self.psi = spsolve(self.Mat1, self.Mat2.dot(self.psi))
-        # Update time
         self.t += self.dt

@@ -18,13 +18,13 @@ import pickle
 plt.rcParams.update({'font.size': 8})
 
 # -------------------------------------------------
-# Parameters - EDIT THESE
+# Params
 # -------------------------------------------------
+
 kx0 = 25.0
 d = 1.5  # slit separation
 h = 0.1  # hole width
 
-# Fixed parameters
 dt = 0.005
 hbar = 1.0
 m = 1.0
@@ -37,13 +37,11 @@ x = np.arange(x_min, x_max + dx, dx)
 y = np.arange(y_min, y_max + dy, dy)
 Nx, Ny = len(x), len(y)
 
-# Double slit barrier parameters
 x_slit, slit_width = 0.0, 0.2
-V0 = 400.0  # barrier potential height
+V0 = 400.0 
 
 # -------------------------------------------------
-# Calculate derived parameters
-# -------------------------------------------------
+
 wavelength = 2 * np.pi / kx0
 x_screen_fixed = (d**2) / wavelength  # Screen at d²/λ
 
@@ -58,22 +56,18 @@ print(f"  Fresnel number F = 1")
 print("="*60)
 
 # -------------------------------------------------
-# Setup simulation
-# -------------------------------------------------
 xx, yy = np.meshgrid(x, y, indexing='ij')
 
-# Create barrier potential using DoubleSlitConfig
 slit_cfg = DoubleSlitConfig(
     x_slit=x_slit,
     slit_width=slit_width,
     y_lower_min=y_min,
-    y_lower_max=y1 - h/2,  # lower slit bottom edge
-    y_upper_min=y2 + h/2,  # upper slit top edge
+    y_lower_max=y1 - h/2,
+    y_upper_min=y2 + h/2, 
     y_upper_max=y_max,
     V0=V0,
 )
 
-# Build potential barrier
 mask = build_double_slit_mask(x, y, slit_cfg)
 V = mask_to_potential(mask, slit_cfg.V0)
 
@@ -89,21 +83,17 @@ psi0_grid = (1/(2*delta_x**2*np.pi)**(1/4) *
              np.exp(-((yy-y0)/(2*delta_y)) ** 2) *
              np.exp(1j * (kx0*xx)))
 
-# Convert to y-major order for WaveFunctionCN
-psi0_grid_yx = psi0_grid.swapaxes(0, 1)  # (Ny, Nx)
-psi0_flat = psi0_grid_yx.flatten(order="F")  # y-major: idx = i_y + j_x*Ny
+psi0_grid_yx = psi0_grid.swapaxes(0, 1) 
+psi0_flat = psi0_grid_yx.flatten(order="F") 
 
-# Create WaveFunctionCN object with actual barrier potential
 S = WaveFunctionCN(x=x, y=y, psi_0=psi0_flat, V=V, 
                    dt=dt, hbar=hbar, m=m)
 
-# Normalize
 S.psi = S.psi / S.compute_norm()
 
-# Fresnel initial field (aperture function)
 U0 = np.zeros_like(y, dtype=complex)
-open_min = slit_cfg.y_lower_max  # opening starts here
-open_max = slit_cfg.y_upper_min  # opening ends here
+open_min = slit_cfg.y_lower_max 
+open_max = slit_cfg.y_upper_min 
 U0[(y >= open_min) & (y <= open_max)] = 1.0
 norm = np.trapezoid(np.abs(U0)**2, y)
 if norm > 1e-12:
@@ -113,15 +103,14 @@ else:
 
 FD = Fresnel1D(y=y, U0=U0, wavelength=wavelength)
 
-# Screen index
 ix_screen = np.argmin(np.abs(x - x_screen_fixed))
 
 # -------------------------------------------------
 # Evolve to screen
 # -------------------------------------------------
+
 print(f"Evolving to screen at x={x_screen_fixed:.2f}...")
-# Custom time for animation - set this to control duration
-t_target = 2.0  # You can change this value (try 1.0, 1.5, or 2.0)
+t_target = 2.0  
 n_steps = int(t_target / dt)
 
 for _ in range(n_steps):
@@ -130,11 +119,12 @@ for _ in range(n_steps):
 print(f"Evolved {n_steps} steps to t={S.t:.3f}")
 
 # -------------------------------------------------
-# Compute full spatial maps
+# Compute spatial maps
 # -------------------------------------------------
+
 print("Computing spatial maps...")
 
-prob_final = S.get_prob().reshape(Ny, Nx, order="F")  # y-major order
+prob_final = S.get_prob().reshape(Ny, Nx, order="F") 
 
 qm_full_map = np.zeros((Nx, Ny))
 fresnel_full_map = np.zeros((Nx, Ny))
@@ -163,8 +153,42 @@ for ix, x_val in enumerate(x):
 diff_map = np.abs(qm_full_map - fresnel_full_map)
 
 # -------------------------------------------------
-# Plot 1: Comparison Maps
+# Integrated error vs x
 # -------------------------------------------------
+
+print("Computing integrated error vs x...")
+x_error = []
+error_L2_vs_x = []
+
+for ix, x_val in enumerate(x):
+    # Only after the barrier
+    if x_val <= x_slit:
+        continue
+    
+    I_qm = qm_full_map[ix, :]
+    I_fr = fresnel_full_map[ix, :]
+    
+    diff = I_qm - I_fr
+    
+    # L2 norm over y
+    err = np.sqrt(np.trapezoid(diff**2, y))
+    
+    x_error.append(x_val)
+    error_L2_vs_x.append(err)
+
+x_error = np.array(x_error)
+error_L2_vs_x = np.array(error_L2_vs_x)
+
+# Smoothing function
+def running_mean(a, window=7):
+    return np.convolve(a, np.ones(window)/window, mode='same')
+
+error_smooth = running_mean(error_L2_vs_x, window=9)
+
+# -------------------------------------------------
+# Comparison Maps
+# -------------------------------------------------
+
 print("Creating comparison maps...")
 
 fig1, axs = plt.subplots(1, 3, figsize=(14, 4))
@@ -213,14 +237,14 @@ plt.savefig(f'comparison_maps_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150)
 print(f"Saved: comparison_maps_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png")
 
 # -------------------------------------------------
-# Plot 2: Screen intensity at fixed position
+# Screen intensity at fixed position
 # -------------------------------------------------
+
 print("Creating screen intensity plot...")
 
 qm_slice = qm_full_map[ix_screen, :]
 fresnel_slice = fresnel_full_map[ix_screen, :]
 
-# Get unnormalized for actual intensity comparison
 qm_slice_raw = prob_final[:, ix_screen]
 fresnel_slice_raw = FD.intensity(x_screen_fixed - x_slit)
 
@@ -251,7 +275,36 @@ plt.savefig(f'screen_intensity_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150)
 print(f"Saved: screen_intensity_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png")
 
 # -------------------------------------------------
-# Animation: Evolving screen comparison
+# Integrated error vs x position
+# -------------------------------------------------
+
+print("Creating integrated error vs x plot...")
+
+fig_error, ax_err = plt.subplots(figsize=(10, 5))
+
+# Plot raw error (semi-transparent)
+ax_err.plot(x_error, error_L2_vs_x, alpha=0.3, color='gray', lw=1, label='Raw')
+
+# Plot smoothed error (main line)
+ax_err.plot(x_error, error_smooth, 'k-', lw=2.5, label='Smoothed')
+
+# Reference lines
+ax_err.axvline(x_screen_fixed, color='red', ls='--', lw=2, alpha=0.7, label=f'Screen (x={x_screen_fixed:.2f})')
+ax_err.axvline(x_slit, color='blue', ls=':', lw=1.5, alpha=0.6, label='Barrier')
+
+ax_err.set_xlabel('x', fontsize=12)
+ax_err.set_ylabel(r'$\|QM - Fresnel\|_{L^2(y)}$', fontsize=12)
+ax_err.set_title(f'Fresnel Approximation Error vs x (k={kx0}, d={d}, h={h})', fontsize=12)
+ax_err.legend(fontsize=10, loc='best')
+ax_err.grid(True, alpha=0.3)
+ax_err.set_xlim(x_slit, x_max)
+ax_err.set_ylim(bottom=0)  # Start from 0
+plt.tight_layout()
+plt.savefig(f'error_vs_x_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150)
+print(f"Saved: error_vs_x_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png")
+
+# -------------------------------------------------
+# Evolving screen comparison
 # -------------------------------------------------
 print("Creating animated screen comparison...")
 
@@ -262,7 +315,7 @@ S = WaveFunctionCN(x=x, y=y, psi_0=psi0_flat, V=V,
                    dt=dt, hbar=hbar, m=m)
 S.psi = S.psi / S.compute_norm()
 
-nb_frames = min(200, n_steps)  # Limit animation frames
+nb_frames = min(200, n_steps) 
 frame_skip = max(1, n_steps // nb_frames)
 
 fig3, ax = plt.subplots(figsize=(8, 5))
@@ -281,7 +334,6 @@ ax.set_xlim(y_min, y_max)
 ax.set_ylim(0, max(prob0[:, ix_screen].max(), fresnel_slice_raw.max()) * 1.2)
 
 def animate_screen(i):
-    # Step simulation
     for _ in range(frame_skip):
         S.step()
     
@@ -289,13 +341,10 @@ def animate_screen(i):
     prob = S.get_prob().reshape(Ny, Nx, order="F")
     qm_intensity = prob[:, ix_screen]
     
-    # Update lines
     qm_line.set_ydata(qm_intensity)
     
-    # Update title
     ax.set_title(f'Screen at x={x_screen_fixed:.2f}, t={t:.2f}', fontsize=12)
     
-    # Dynamic y-limit
     max_val = max(qm_intensity.max(), fresnel_slice_raw.max())
     ax.set_ylim(0, max_val * 1.2)
     
@@ -314,14 +363,16 @@ print(f"Saved: screen_animation_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.gif")
 # -------------------------------------------------
 # Calculate errors
 # -------------------------------------------------
+
 error_L2 = np.sqrt(np.trapezoid((qm_slice - fresnel_slice)**2, y))
 print("\n" + "="*60)
 print(f"L2 error at screen: {error_L2:.6f}")
 print("="*60)
 
 # -------------------------------------------------
-# Plot 3: Spacetime comparison GIF
+# Spacetime comparison GIF
 # -------------------------------------------------
+
 print("Creating spacetime comparison GIF...")
 
 # Reset simulation
@@ -334,18 +385,14 @@ S.psi = S.psi / S.compute_norm()
 nb_frames_gif = min(200, n_steps)
 frame_skip = max(1, n_steps // nb_frames_gif)
 
-# Use the already computed normalized QM map from comparison maps section
-# (This is the static normalized map used in the comparison)
-qm_normalized_static = qm_full_map.copy()  # Already computed earlier
+qm_normalized_static = qm_full_map.copy() 
 
-# Setup figure with 3 panels
 fig_gif = plt.figure(figsize=(14, 5))
 gs = gridspec.GridSpec(1, 3, width_ratios=[1.3, 1.3, 1])
 ax_qm = plt.subplot(gs[0])
 ax_fr = plt.subplot(gs[1])
 ax_scr = plt.subplot(gs[2])
 
-# Initial QM state
 prob0 = S.get_prob().reshape(Ny, Nx, order="F")
 im_qm = ax_qm.contourf(xx, yy, prob0.T, levels=100, cmap='jet')
 ax_qm.axvline(x_screen_fixed, color='white', ls='--', lw=1)
@@ -355,15 +402,10 @@ ax_qm.set_ylabel('y')
 ax_qm.set_xlim(x_min, x_max)
 ax_qm.set_ylim(y_min, y_max)
 
-# Draw double slit barriers
 ax_qm.vlines([x_slit, x_slit + slit_width], slit_cfg.y_lower_min, slit_cfg.y_lower_max, colors='white', linewidth=2)
 ax_qm.vlines([x_slit, x_slit + slit_width], slit_cfg.y_upper_min, slit_cfg.y_upper_max, colors='white', linewidth=2)
 ax_qm.hlines([slit_cfg.y_lower_max, slit_cfg.y_upper_min], x_slit, x_slit + slit_width, colors='white', linewidth=2)
 
-
-
-
-# Static normalized QM map
 ax_fr.imshow(
     fresnel_full_map.T,
     extent=[x_min, x_max, y_min, y_max],
@@ -376,10 +418,6 @@ ax_fr.set_title('Fresnel map (normalized)')
 ax_fr.set_xlabel('x')
 ax_fr.set_ylabel('y')
 
-
-
-
-# Screen comparison
 qm_slice_0 = prob0[:, ix_screen]
 fresnel_slice_0 = fresnel_slice_raw
 line_qm, = ax_scr.plot(y, qm_slice_0, 'b-', lw=2, label='Schrödinger', alpha=0.8)
@@ -395,14 +433,12 @@ ax_scr.grid(True, alpha=0.3)
 plt.tight_layout()
 
 def animate_spacetime(i):
-    # Step simulation
     for _ in range(frame_skip):
         S.step()
     
     t = S.t
     prob = S.get_prob().reshape(Ny, Nx, order="F")
     
-    # Update QM panel
     ax_qm.clear()
     ax_qm.contourf(xx, yy, prob.T, levels=100, cmap='jet')
     ax_qm.axvline(x_screen_fixed, color='white', ls='--', lw=1)
@@ -412,12 +448,10 @@ def animate_spacetime(i):
     ax_qm.set_xlim(x_min, x_max)
     ax_qm.set_ylim(y_min, y_max)
     
-    # Redraw barriers
     ax_qm.vlines([x_slit, x_slit + slit_width], slit_cfg.y_lower_min, slit_cfg.y_lower_max, colors='white', linewidth=2)
     ax_qm.vlines([x_slit, x_slit + slit_width], slit_cfg.y_upper_min, slit_cfg.y_upper_max, colors='white', linewidth=2)
     ax_qm.hlines([slit_cfg.y_lower_max, slit_cfg.y_upper_min], x_slit, x_slit + slit_width, colors='white', linewidth=2)
     
-    # Update screen comparison
     qm_intensity = prob[:, ix_screen]
     line_qm.set_ydata(qm_intensity)
     

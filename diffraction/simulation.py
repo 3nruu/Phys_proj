@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 
-# Small epsilon to avoid divide-by-zero in normalization
 NORM_EPS = 1e-12
 
 @dataclass
