@@ -21,15 +21,15 @@ plt.rcParams.update({'font.size': 8})
 # Parameters - EDIT THESE
 # -------------------------------------------------
 kx0 = 25.0
-d = 2.0  # slit separation
-h = 0.5  # hole width
+d = 1.5  # slit separation
+h = 0.1  # hole width
 
 # Fixed parameters
 dt = 0.005
 hbar = 1.0
 m = 1.0
 
-x_min, x_max = -2.0, 12.0
+x_min, x_max = -2.0, 20.0
 y_min, y_max = -6.0, 6.0
 dx = dy = 0.08
 
@@ -120,9 +120,9 @@ ix_screen = np.argmin(np.abs(x - x_screen_fixed))
 # Evolve to screen
 # -------------------------------------------------
 print(f"Evolving to screen at x={x_screen_fixed:.2f}...")
-t_target = x_screen_fixed / kx0
-#n_steps = int(t_target / dt)
-n_steps = 300
+# Custom time for animation - set this to control duration
+t_target = 2.0  # You can change this value (try 1.0, 1.5, or 2.0)
+n_steps = int(t_target / dt)
 
 for _ in range(n_steps):
     S.step()
@@ -209,7 +209,7 @@ axs[2].set_ylabel("y")
 plt.colorbar(im2, ax=axs[2])
 
 plt.tight_layout()
-plt.savefig(f'comparison_maps_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150, bbox_inches='tight')
+plt.savefig(f'comparison_maps_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150)
 print(f"Saved: comparison_maps_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png")
 
 # -------------------------------------------------
@@ -247,7 +247,7 @@ ax2.grid(True, alpha=0.3)
 ax2.set_xlim(y_min, y_max)
 
 plt.tight_layout()
-plt.savefig(f'screen_intensity_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150, bbox_inches='tight')
+plt.savefig(f'screen_intensity_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png', dpi=150)
 print(f"Saved: screen_intensity_k{kx0:.0f}_d{d:.1f}_h{h:.1f}.png")
 
 # -------------------------------------------------
@@ -262,7 +262,7 @@ S = WaveFunctionCN(x=x, y=y, psi_0=psi0_flat, V=V,
                    dt=dt, hbar=hbar, m=m)
 S.psi = S.psi / S.compute_norm()
 
-nb_frames = min(300, n_steps)  # Limit animation frames
+nb_frames = min(200, n_steps)  # Limit animation frames
 frame_skip = max(1, n_steps // nb_frames)
 
 fig3, ax = plt.subplots(figsize=(8, 5))
@@ -331,7 +331,7 @@ S = WaveFunctionCN(x=x, y=y, psi_0=psi0_flat, V=V,
                    dt=dt, hbar=hbar, m=m)
 S.psi = S.psi / S.compute_norm()
 
-nb_frames_gif = min(300, n_steps)
+nb_frames_gif = min(200, n_steps)
 frame_skip = max(1, n_steps // nb_frames_gif)
 
 # Use the already computed normalized QM map from comparison maps section
